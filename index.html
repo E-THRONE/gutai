@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽象➡︎具体</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1d1f27;
+            color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #66fcf1;
+        }
+        #quiz-container {
+            background-color: #0b0c10;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            text-align: center;
+        }
+        #quiz-container h2 {
+            margin-bottom: 20px;
+        }
+        .sortable-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+        .draggable {
+            padding: 10px;
+            background-color: #45a29e;
+            border-radius: 5px;
+            cursor: grab;
+            user-select: none;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #66fcf1;
+        }
+        #score-container {
+            display: none;
+            margin-top: 20px;
+        }
+        #score {
+            font-size: 24px;
+            color: #45a29e;
+        }
+        #reset-button {
+            background-color: #1f2833;
+            color: #66fcf1;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #reset-button:hover {
+            background-color: #45a29e;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>抽象➡︎具体の順になるように並び替えてください。</h1>
+    <div id="quiz-container">
+        <h2 id="question-title">Question 1:</h2>
+        <div id="sortable-container" class="sortable-container">
+            <!-- Draggable items will be inserted here -->
+        </div>
+        <button id="check-button">Check Answer</button>
+        <div id="result"></div>
+    </div>
+    <div id="score-container">
+        <p>結果: <span id="score"></span>/10</p>
+        <button id="reset-button">もう1度挑戦する</button>
+    </div>
+
+    <script>
+        const questions = [
+            ["生き物", "動物", "哺乳類", "犬"],
+            ["楽器", "弦楽器", "ギター", "エレキギター"],
+            ["飲み物", "お酒", "ワイン", "赤ワイン"],
+            ["植物", "木", "果樹", "リンゴの木"],
+            ["電子機器", "コンピュータ", "ノートパソコン", "MacBook"],
+            ["服", "上着", "コート", "トレンチコート"],
+            ["書籍", "小説", "推理小説", "シャーロック・ホームズ"],
+            ["音楽", "クラシック", "交響曲", "ベートーヴェンの第九"],
+            ["アート", "絵画", "油絵", "モナ・リザ"],
+            ["学問", "自然科学", "物理学", "量子力学"],
+            ["生物", "魚類", "淡水魚", "サケ"],
+            ["動物", "鳥類", "猛禽類", "ワシ"],
+    ["建物", "住宅", "一戸建て", "平屋"],
+    ["乗り物", "自動車", "スポーツカー", "フェラーリ"],
+    ["食べ物", "麺類", "ラーメン", "とんこつラーメン"],
+            ["楽器", "鍵盤楽器", "ピアノ", "グランドピアノ"],
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedQuestions = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function makeSortable(container) {
+            let draggingElement;
+            let placeholder;
+
+            container.addEventListener('dragstart', function (e) {
+                draggingElement = e.target;
+                draggingElement.style.opacity = 0.5;
+
+                placeholder = document.createElement('div');
+                placeholder.className = 'draggable';
+                placeholder.style.visibility = 'hidden';
+                container.insertBefore(placeholder, draggingElement.nextSibling);
+            });
+
+            container.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                const target = e.target;
+                if (target && target !== draggingElement && target.classList.contains('draggable')) {
+                    const rect = target.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    container.insertBefore(draggingElement, next && target.nextSibling || target);
+                }
+            });
+
+            container.addEventListener('dragend', function () {
+                draggingElement.style.opacity = 1;
+                container.removeChild(placeholder);
+                draggingElement = null;
+                placeholder = null;
+            });
+
+            Array.from(container.children).forEach(function (item) {
+                item.setAttribute('draggable', true);
+            });
+        }
+
+        function loadQuestion() {
+            document.getElementById("result").textContent = "";
+            if (currentQuestionIndex < 10) {
+                const question = shuffle([...selectedQuestions[currentQuestionIndex]]);
+                const container = document.getElementById("sortable-container");
+                container.innerHTML = "";
+                question.forEach(item => {
+                    const div = document.createElement("div");
+                    div.textContent = item;
+                    div.className = "draggable";
+                    container.appendChild(div);
+                });
+                makeSortable(container);
+                currentQuestionIndex++;
+                document.getElementById("question-title").textContent = `Question ${currentQuestionIndex}:`;
+            } else {
+                document.getElementById("quiz-container").style.display = "none";
+                document.getElementById("score-container").style.display = "block";
+                document.getElementById("score").textContent = `${score}`;
+            }
+        }
+
+        function checkAnswer() {
+            const container = document.getElementById("sortable-container");
+            const items = Array.from(container.children).map(item => item.textContent);
+            const correctOrder = selectedQuestions[currentQuestionIndex - 1];
+
+            if (items.join() === correctOrder.join()) {
+                document.getElementById("result").textContent = "正解です！";
+                score++;
+            } else {
+                document.getElementById("result").textContent = `惜しい!: ${correctOrder.join(" ➡ ")}`;
+            }
+        }
+
+        document.getElementById("check-button").addEventListener("click", () => {
+            checkAnswer();
+            setTimeout(loadQuestion, 2000);
+        });
+
+        document.getElementById("reset-button").addEventListener("click", () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedQuestions = shuffle(questions).slice(0, 10); // 新しいランダムな質問を選択
+            document.getElementById("score-container").style.display = "none";
+            document.getElementById("quiz-container").style.display = "block";
+            loadQuestion();
+        });
+
+        // 初期化
+        selectedQuestions = shuffle(questions).slice(0, 10); // 最初の10問を選択
+        loadQuestion();
+    </script>
+
+</body>
+</html>
